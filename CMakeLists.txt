@@ -53,11 +53,25 @@ foreach(extlib datetime functional)
   link_directories(src/external/${extlib}-fortran/build/lib)
 endforeach()
 
+
+include_directories(/usr/include)
+
+
 file(GLOB wavy_lib "src/lib/mod_*.f90")
 
 # library to archive (libwavy.a)
 add_library(wavy ${wavy_lib})
 add_library(testing src/tests/unit/mod_testing.f90)
+
+# did ont work
+# add_library(netcdff STATIC IMPORTED)
+# add_library(netcdf STATIC IMPORTED)
+# set_target_properties(netcdf PROPERTIES IMPORTED_LOCATION /usr/lib/x86_64-linux-gnu/libnetdf.so)
+# set_target_properties(netcdff PROPERTIES IMPORTED_LOCATION /usr/lib/x86_64-linux-gnu/libnetdff.a)
+
+link_directories(/usr/lib/x86_64-linux-gnu/libnetdf.so)
+link_directories(/usr/lib/x86_64-linux-gnu/libnetdff.a)
+
 
 # tests
 enable_testing()
@@ -69,16 +83,16 @@ foreach(exec json utility grid spectrum domain)
   add_test(test_${exec} bin/test_${exec})
 endforeach()
 
-# integration tests
-foreach(exec jonswap phillips pierson_moskowitz dhh dhh_directional advection advection_2d time_integration_spectrum time_integration_domain) 
-  add_executable(test_${exec} src/tests/integration/test_${exec}.f90)
-  target_link_libraries(test_${exec} wavy testing datetime functional jsonfortran)
-  add_test(test_${exec} bin/test_${exec})
-endforeach()
+# # integration tests
+# foreach(exec jonswap phillips pierson_moskowitz dhh dhh_directional advection advection_2d time_integration_spectrum time_integration_domain)
+#   add_executable(test_${exec} src/tests/integration/test_${exec}.f90)
+#   target_link_libraries(test_${exec} wavy testing datetime functional jsonfortran)
+#   add_test(test_${exec} bin/test_${exec})
+# endforeach()
 
-foreach(exec umwm_1d spectrum_omnidirectional spectrum_directional spectrum_jonswap)  
+foreach(exec umwm_2d umwm_1d spectrum_omnidirectional spectrum_directional spectrum_jonswap)
   add_executable(${exec} src/examples/${exec}.f90)
-  target_link_libraries(${exec} wavy testing datetime functional jsonfortran)
+  target_link_libraries(${exec} wavy testing datetime functional jsonfortran netcdf netcdff)
 endforeach()
 
 install(DIRECTORY "${CMAKE_Fortran_MODULE_DIRECTORY}" DESTINATION "${CMAKE_INSTALL_PREFIX}")
