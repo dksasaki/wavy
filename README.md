@@ -9,7 +9,7 @@ A spectral ocean wave modeling framework.
 * [Design principles](#design-principles)
 * [Features](#features)
 * [API Documentation](#api-documentation)
-* [Docker](#portability)
+* [Docker (portability)](#docker-portability)
 * [Development status](#development-status)
 
 ### Getting started
@@ -190,7 +190,7 @@ outputs:
 
 Full API documentation is available [here](https://wavebitscientific.github.io/wavy).
 
-### Portability
+### Docker (portability)
 A Dockerfile is available for developers. Docker is a platform that allows applications
 to run across hybrid/multi-cloud and simplifies the installation of dependencies.
 
