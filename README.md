@@ -9,6 +9,7 @@ A spectral ocean wave modeling framework.
 * [Design principles](#design-principles)
 * [Features](#features)
 * [API Documentation](#api-documentation)
+* [Docker](#portability)
 * [Development status](#development-status)
 
 ### Getting started
@@ -42,9 +43,9 @@ wavy needs gcc-6.3.0 or later to succesfully build and pass all tests.
 #### Building a simple program with wavy
 
 If you compiled wavy in `wavy/build`, then the module files and the library
-are located in `wavy/build/include` and `wavy/build/lib`, respectively. 
+are located in `wavy/build/include` and `wavy/build/lib`, respectively.
 For example, if we want to build a simple wavy hello world program from
-the base directory, we could do it like this: 
+the base directory, we could do it like this:
 
 ```
 gfortran hello.f90 -o hello -Ibuild/include -Lbuild/lib -lwavy
@@ -52,7 +53,7 @@ gfortran hello.f90 -o hello -Ibuild/include -Lbuild/lib -lwavy
 
 #### Examples
 
-Initialize a omnidirectional spectrum instance in the frequency range from 
+Initialize a omnidirectional spectrum instance in the frequency range from
 0.04 to 2 Hz with logarithmic increment of 1.1, in mean water depth of 1000 m:
 
 ```fortran
@@ -85,8 +86,8 @@ spec = spectrum_type(fmin=0.04,fmax=2.,df=1.1,ndirs=1,depth=1000.)
 spec = jonswap(spec % getFrequency(),wspd=10.,fetch=1e5,grav=9.8)
 ```
 
-Above examples will work with default precision (`REAL32`). 
-To write code that is always compatible with precision specified at 
+Above examples will work with default precision (`REAL32`).
+To write code that is always compatible with precision specified at
 build time, use `mod_precision` module:
 
 ```fortran
@@ -101,7 +102,7 @@ spec = spectrum_type(fmin=0.04_rk,fmax=2._rk,df=1.1_rk,ndirs=1,depth=1000._rk)
 
 ! assign a JONSWAP-shape spectrum to the instance
 spec = jonswap(spec % getFrequency(),wspd=10._rk,fetch=1e5_rk,grav=9.8_rk)
-``` 
+```
 There are many pre-built diagnostics that can be output from a `spectrum`
 instance, here is a taste of a few:
 
@@ -142,7 +143,7 @@ outputs:
     - [ ] Sin, Sds, WAM cycle 3 (Komen et al., 1984)
     - [ ] Sin, Sds (Tolman and Chalikov, 1996)
     - [ ] Sin, Sds, WAM cycle 4 (Janssen, 2004)
-    - [ ] Sin, Sds, (Ardhuin et al., 2010) 
+    - [ ] Sin, Sds, (Ardhuin et al., 2010)
     - [ ] Snl, DIA (Hasselmann et al., 1985)
 
 * Parametric spectra:
@@ -189,8 +190,17 @@ outputs:
 
 Full API documentation is available [here](https://wavebitscientific.github.io/wavy).
 
+### Portability
+A Dockerfile is available for developers. Docker is a platform that allows applications
+to run across hybrid/multi-cloud and simplifies the installation of dependencies.
+
+The present Dockerfile the dependencies required by wavy and also:
+  * NetCDF Libraries (library paths are set up by the CMakeLists.txt)
+
+More information is available in this [Youtube tutorial](https://www.youtube.com/watch?v=fqMOX6JJhGo&t=2790s).
+
 ### Development status
 
 wavy is in early development. Contributors are highly needed,
-especially for implementing source functions. You can start 
+especially for implementing source functions. You can start
 contributing by opening an [issue](https://github.com/wavebitscientific/wavy/issues/new).
