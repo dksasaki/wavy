@@ -197,7 +197,7 @@ to run across hybrid/multi-cloud and simplifies the installation of dependencies
 The present Dockerfile the dependencies required by wavy and also:
   * NetCDF Libraries (library paths are set up by the CMakeLists.txt)
 
-More information is available in this [Youtube tutorial](https://www.youtube.com/watch?v=fqMOX6JJhGo&t=2790s).
+More information is available in this [Youtube tutorial](https://youtu.be/fqMOX6JJhGo).
 
 ### Development status
 
