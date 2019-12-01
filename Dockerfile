@@ -76,9 +76,9 @@ RUN useradd -ms /bin/bash newuser
 WORKDIR /home/newuser
 USER newuser
 
-#ENV NETCDF=/usr/lib/x86_64-linux-gnu/
-#ENV NETCDFINC=-I/usr/include
-#ENV NETCDFLIB="-L/usr/lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/libnetcdff.a -lnetcdf -lnetcdff"
 
-ENV NETCDFINC=/usr/include
-ENV NETCDFLIB="/usr/lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu/libnetcdff.a -lnetcdf -lnetcdff"
+
+
+
+
+
