@@ -12,7 +12,7 @@ use mod_spectrum,only:spectrum_type
 use mod_grid,only:grid_type
 use mod_const
 use datetime_module,only:datetime,timedelta
-use json_module,only:json_core,json_file,json_value
+! use json_module,only:json_core,json_file,json_value
 
 implicit none
 
@@ -83,7 +83,7 @@ type :: domain_type
   procedure,public,pass(self) :: setWaterDensity
   procedure,public,pass(self) :: significantWaveHeight
   procedure,public,pass(self) :: wavenumberMoment
-  procedure,public,pass(self) :: writeJSON
+  ! procedure,public,pass(self) :: writeJSON
 
   ! Specific procedures overloaded by generic procedures and operators
   procedure,private,pass(self) :: advect1dRank1
@@ -187,7 +187,7 @@ type(domain_type) function constructor(grid,spectrum,shallow_water_mode) result(
   allocate(domain % u(domain % lb(1):domain % ub(1),&
                       domain % lb(2):domain % ub(2)))
   domain % u = 0
- 
+
   allocate(domain % v(domain % lb(1):domain % ub(1),&
                       domain % lb(2):domain % ub(2)))
   domain % v = 0
@@ -211,7 +211,7 @@ endfunction constructor
 pure type(domain_type) function advect1dRank1(self,advection_method,halowidth,&
   directional_type) result(adv)
   !! Computes the advective tendency for the domain instance given the desired
-  !! advection method as an input function and the number of halo cells. This 
+  !! advection method as an input function and the number of halo cells. This
   !! function works only in cases where `ndirs == 1`.
   !!
   !! This implementation accepts the methods that operate on spectrum arrays
@@ -257,8 +257,8 @@ endfunction advect1dRank1
 pure type(domain_type) function advect1dRank2(self,advection_method,halowidth,&
   directional_type) result(adv)
   !! Computes the advective tendency for the domain instance given the desired
-  !! advection method as an input function and the number of halo cells. This 
-  !! function works both when `ndirs == 1` (omnidirectional) and when 
+  !! advection method as an input function and the number of halo cells. This
+  !! function works both when `ndirs == 1` (omnidirectional) and when
   !! `ndirs > 1` (directional).
   !!
   !! This implementation accepts the methods that operate on spectrum arrays
@@ -304,8 +304,8 @@ endfunction advect1dRank2
 pure type(domain_type) function advect2dRank2(self,advection_method,halowidth)&
   result(adv)
   !! Computes the advective tendency for the domain instance given the desired
-  !! advection method as an input function and the number of halo cells. This 
-  !! function works both when `ndirs == 1` (omnidirectional) and when 
+  !! advection method as an input function and the number of halo cells. This
+  !! function works both when `ndirs == 1` (omnidirectional) and when
   !! `ndirs > 1` (directional).
   !!
   !! This implementation accepts the methods that operate on spectrum arrays
@@ -372,11 +372,11 @@ endfunction isAllocated
 
 !-------------------------------------------------------------------------------
 pure subroutine assign_spectrum_array_1d(self,spectrum_array)
-  !! Assigns a 1-d array of `spectrum` instances to a `domain` instance. This 
+  !! Assigns a 1-d array of `spectrum` instances to a `domain` instance. This
   !! procedure overloads the assignment ('=') operator.
   class(domain_type),intent(inout) :: self
     !! l.h.s. `domain` instance
-  class(spectrum_type),dimension(:),intent(in) :: spectrum_array 
+  class(spectrum_type),dimension(:),intent(in) :: spectrum_array
     !! r.h.s. array of `spectrum` instances
   call self % setSpectrum(spectrum_array)
 endsubroutine assign_spectrum_array_1d
@@ -386,11 +386,11 @@ endsubroutine assign_spectrum_array_1d
 
 !-------------------------------------------------------------------------------
 pure subroutine assign_spectrum_array_2d(self,spectrum_array)
-  !! Assigns a 2-d array of `spectrum` instances to a `domain` instance. This 
+  !! Assigns a 2-d array of `spectrum` instances to a `domain` instance. This
   !! procedure overloads the assignment ('=') operator.
-  class(domain_type),intent(inout) :: self 
+  class(domain_type),intent(inout) :: self
     !! l.h.s. `domain` instance
-  class(spectrum_type),dimension(:,:),intent(in) :: spectrum_array 
+  class(spectrum_type),dimension(:,:),intent(in) :: spectrum_array
     !! r.h.s. array of `spectrum` instances
   call self % setSpectrum(spectrum_array)
 endsubroutine assign_spectrum_array_2d
@@ -588,13 +588,13 @@ endfunction real_div_domain
 
 !-------------------------------------------------------------------------------
 pure function getCurrent_u(self) result(u)
-  !! Returns the 3-d array with values of Eulerian velocity (mean current) in 
+  !! Returns the 3-d array with values of Eulerian velocity (mean current) in
   !! x-direction [m/s].
   !!
-  !! Note: this implementation assumes that all u and v velocity arrays in 
+  !! Note: this implementation assumes that all u and v velocity arrays in
   !! the domain instance are of same length in depth, such that the resulting
   !! u and v arrays are regular 3-d arrays.
-  class(domain_type),intent(in) :: self 
+  class(domain_type),intent(in) :: self
     !! Domain instance
   real(kind=rk),dimension(:,:,:),allocatable :: u
     !! Eulerian u-velocity [m/s]
@@ -614,13 +614,13 @@ endfunction getCurrent_u
 
 !-------------------------------------------------------------------------------
 pure function getCurrent_v(self) result(v)
-  !! Returns the 3-d array with values of Eulerian velocity (mean current) in 
+  !! Returns the 3-d array with values of Eulerian velocity (mean current) in
   !! y-direction [m/s].
   !!
-  !! Note: this implementation assumes that all u and v velocity arrays in 
+  !! Note: this implementation assumes that all u and v velocity arrays in
   !! the domain instance are of same length in depth, such that the resulting
   !! u and v arrays are regular 3-d arrays.
-  class(domain_type),intent(in) :: self 
+  class(domain_type),intent(in) :: self
     !! Domain instance
   real(kind=rk),dimension(:,:,:),allocatable :: v
     !! Eulerian v-velocity [m/s]
@@ -641,9 +641,9 @@ endfunction getCurrent_v
 !-------------------------------------------------------------------------------
 pure function getDepth(self) result(depth)
   !! Returns the mean water depth [m] array.
-  class(domain_type),intent(in) :: self 
+  class(domain_type),intent(in) :: self
     !! Domain instance
-  real(kind=rk),dimension(:,:),allocatable :: depth 
+  real(kind=rk),dimension(:,:),allocatable :: depth
     !! Mean water depth [m]
   depth = self % spectrum % getDepth()
 endfunction getDepth
@@ -654,7 +654,7 @@ endfunction getDepth
 !-------------------------------------------------------------------------------
 pure function getElevation(self) result(elevation)
   !! Returns the mean water elevation [m] array.
-  class(domain_type),intent(in) :: self 
+  class(domain_type),intent(in) :: self
     !! Domain instance
   real(kind=rk),dimension(:,:),allocatable :: elevation
     !! Mean water elevation [m]
@@ -693,9 +693,9 @@ endfunction getDirections
 !-------------------------------------------------------------------------------
 pure function getGravity(self) result(grav)
   !! Returns the gravitational acceleration [m/s^2] array.
-  class(domain_type),intent(in) :: self 
+  class(domain_type),intent(in) :: self
     !! Domain instance
-  real(kind=rk),dimension(:,:),allocatable :: grav 
+  real(kind=rk),dimension(:,:),allocatable :: grav
     !! Gravitational acceleration [m/s^2]
   grav = self % spectrum % getGravity()
 endfunction getGravity
@@ -761,8 +761,8 @@ pure function getSpectrumArray(self,halowidth,periodic) result(spectrum_array)
   integer(kind=ik),dimension(2),intent(in) :: halowidth
     !! Integers indicating how many cells to allocate for halo points
   logical,intent(in) :: periodic
-    !! If `.true.`, halo cells will be updated with values corresponding to 
-    !! periodic boundary conditions 
+    !! If `.true.`, halo cells will be updated with values corresponding to
+    !! periodic boundary conditions
   integer(kind=ik) :: i,j
   integer(kind=ik) :: ndirs,nfreqs
   associate(lb => self % lb,ub => self % ub,hw => halowidth)
@@ -795,7 +795,7 @@ pure function getPhaseSpeed(self) result(cp)
   !! Returns a 3-d array with phase speed values [m/s].
   class(domain_type),intent(in) :: self
     !! Domain instance
-  real(kind=rk),dimension(:,:,:),allocatable :: cp 
+  real(kind=rk),dimension(:,:,:),allocatable :: cp
     !! Phase speed [m/s] array
   integer(kind=ik) :: i,j
   integer(kind=ik) :: ndirs
@@ -820,8 +820,8 @@ pure function getGroupSpeed(self,halowidth,periodic) result(cg)
   integer(kind=ik),dimension(2),intent(in) :: halowidth
     !! Integers indicating how many cells to allocate for halo points
   logical,intent(in) :: periodic
-    !! If `.true.`, halo cells will be updated with values corresponding to 
-    !! periodic boundary conditions 
+    !! If `.true.`, halo cells will be updated with values corresponding to
+    !! periodic boundary conditions
   integer(kind=ik) :: i,j
   associate(lb => self % lb,ub => self % ub,hw => halowidth)
   allocate(cg(self % nfreqs,lb(1)-hw(1):ub(1)+hw(1),lb(2)-hw(2):ub(2)+hw(2)))
@@ -849,8 +849,8 @@ pure function getGridSpacingXWithHalo(self,halowidth,periodic) result(dx)
   integer(kind=ik),dimension(2),intent(in) :: halowidth
     !! Integer width of halo region
   logical,intent(in) :: periodic
-    !! If `.true.`, halo cells will be updated with values corresponding to 
-    !! periodic boundary conditions 
+    !! If `.true.`, halo cells will be updated with values corresponding to
+    !! periodic boundary conditions
   real(kind=rk),dimension(:,:),allocatable :: dx
     !! Grid spacing in x [m]
   associate(lb => self % lb,ub => self % ub,hw => halowidth)
@@ -878,8 +878,8 @@ pure function getGridSpacingYWithHalo(self,halowidth,periodic) result(dy)
   integer(kind=ik),dimension(2),intent(in) :: halowidth
     !! Integer width of halo region
   logical,intent(in) :: periodic
-    !! If `.true.`, halo cells will be updated with values corresponding to 
-    !! periodic boundary conditions 
+    !! If `.true.`, halo cells will be updated with values corresponding to
+    !! periodic boundary conditions
   real(kind=rk),dimension(:,:),allocatable :: dy
     !! Grid spacing in y [m]
   associate(lb => self % lb,ub => self % ub,hw => halowidth)
@@ -902,7 +902,7 @@ endfunction getGridSpacingYWithHalo
 !-------------------------------------------------------------------------------
 pure function getSurfaceTension(self) result(surface_tension)
   !! Returns the surface tension [N/m].
-  class(domain_type),intent(in) :: self 
+  class(domain_type),intent(in) :: self
     !! Domain instance
   real(kind=rk),dimension(:,:),allocatable :: surface_tension
     !! Surface tension [N/m]
@@ -915,7 +915,7 @@ endfunction getSurfaceTension
 !-------------------------------------------------------------------------------
 pure function getAirDensity(self) result(air_density)
   !! Returns the air density [kg/m^3].
-  class(domain_type),intent(in) :: self 
+  class(domain_type),intent(in) :: self
     !! Domain instance
   real(kind=rk),dimension(:,:),allocatable :: air_density
     !! Air density [kg/m^3]
@@ -928,7 +928,7 @@ endfunction getAirDensity
 !-------------------------------------------------------------------------------
 pure function getWaterDensity(self) result(water_density)
   !! Returns the water density [kg/m^3].
-  class(domain_type),intent(in) :: self 
+  class(domain_type),intent(in) :: self
     !! Domain instance
   real(kind=rk),dimension(:,:),allocatable :: water_density
     !! Water density [kg/m^3]
@@ -952,9 +952,9 @@ endsubroutine setDepth
 !-------------------------------------------------------------------------------
 pure subroutine setElevation(self,elevation)
   !! Sets the mean water elevation [m].
-  class(domain_type),intent(inout) :: self 
+  class(domain_type),intent(inout) :: self
     !! Domain instance
-  real(kind=rk),dimension(:,:),intent(in) :: elevation 
+  real(kind=rk),dimension(:,:),intent(in) :: elevation
     !! Mean water elevation [m]
   call self % spectrum % setElevation(elevation)
 endsubroutine setElevation
@@ -1156,7 +1156,7 @@ endfunction meanPeriod
 
 
 !-------------------------------------------------------------------------------
-pure function meanPeriodZeroCrossing(self) 
+pure function meanPeriodZeroCrossing(self)
   !! Returns the zero-crossing mean wave period [s] for the whole domain.
   class(domain_type),intent(in) :: self
     !! Domain instance
@@ -1181,32 +1181,32 @@ endfunction significantWaveHeight
 
 
 
-!-------------------------------------------------------------------------------
-subroutine writeJSON(self,filename,minify)
-  !! Writes a spectrum instance to a JSON file.
-  class(domain_type),intent(in) :: self !! `domain` instance
-  character(len=*),intent(in) :: filename !! JSON file name
-  logical,intent(in) :: minify !! Logical switch to minify the JSON file
-  type(json_core) :: json
-  type(json_value),pointer :: ptr
-  call json % initialize(no_whitespace=minify,real_format='ES')
-  call json % create_object(ptr,'')
-  call json % add(ptr,'lb',self % grid % getLowerBounds())
-  call json % add(ptr,'ub',self % grid % getUpperBounds())
-  call json % add(ptr,'x',pack(self % grid % getAxisX(),.true.))
-  call json % add(ptr,'y',pack(self % grid % getAxisY(),.true.))
-  !call json % add(ptr,'lon',pack(self % grid % getLongitude(),.true.))
-  !call json % add(ptr,'lat',pack(self % grid % getLatitude(),.true.))
-  call json % add(ptr,'u',pack(self % u,.true.))
-  call json % add(ptr,'v',pack(self % v,.true.))
-  call json % add(ptr,'eta',pack(self % eta,.true.))
-  call json % add(ptr,'depth',pack(self % depth,.true.))
-  call json % add(ptr,'frequency',self % getFrequency())
-  call json % add(ptr,'directions',self % getDirections())
-  call json % add(ptr,'spectrum',&
-                  pack(self % getSpectrumArray([0,0],.false.),.true.))
-  call json % print(ptr,trim(filename))
-  call json % destroy(ptr)
-endsubroutine writeJSON
-!-------------------------------------------------------------------------------
+! !-------------------------------------------------------------------------------
+! subroutine writeJSON(self,filename,minify)
+!   !! Writes a spectrum instance to a JSON file.
+!   class(domain_type),intent(in) :: self !! `domain` instance
+!   character(len=*),intent(in) :: filename !! JSON file name
+!   logical,intent(in) :: minify !! Logical switch to minify the JSON file
+!   type(json_core) :: json
+!   type(json_value),pointer :: ptr
+!   call json % initialize(no_whitespace=minify,real_format='ES')
+!   call json % create_object(ptr,'')
+!   call json % add(ptr,'lb',self % grid % getLowerBounds())
+!   call json % add(ptr,'ub',self % grid % getUpperBounds())
+!   call json % add(ptr,'x',pack(self % grid % getAxisX(),.true.))
+!   call json % add(ptr,'y',pack(self % grid % getAxisY(),.true.))
+!   !call json % add(ptr,'lon',pack(self % grid % getLongitude(),.true.))
+!   !call json % add(ptr,'lat',pack(self % grid % getLatitude(),.true.))
+!   call json % add(ptr,'u',pack(self % u,.true.))
+!   call json % add(ptr,'v',pack(self % v,.true.))
+!   call json % add(ptr,'eta',pack(self % eta,.true.))
+!   call json % add(ptr,'depth',pack(self % depth,.true.))
+!   call json % add(ptr,'frequency',self % getFrequency())
+!   call json % add(ptr,'directions',self % getDirections())
+!   call json % add(ptr,'spectrum',&
+!                   pack(self % getSpectrumArray([0,0],.false.),.true.))
+!   call json % print(ptr,trim(filename))
+!   call json % destroy(ptr)
+! endsubroutine writeJSON
+! !-------------------------------------------------------------------------------
 endmodule mod_domain

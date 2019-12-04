@@ -12,7 +12,7 @@ use mod_precision,only:ik => intkind,rk => realkind
 use mod_utility,only:diff,diff_periodic
 use mod_const,only:eps,pi,twopi,stderr,stdout
 use datetime_module,only:datetime,timedelta
-use json_module,only:json_core,json_file,json_value 
+use json_module,only:json_core,json_file,json_value
 
 implicit none
 
@@ -1096,8 +1096,8 @@ endfunction significantSurfaceOrbitalVelocity
 
 !-------------------------------------------------------------------------------
 pure function stokesDrift(self,z)
-  !! Exact solution of Stokes drift based on linear wave theory, given input 
-  !! omnidirectional spectrum and distance from surface `z` [m], negative 
+  !! Exact solution of Stokes drift based on linear wave theory, given input
+  !! omnidirectional spectrum and distance from surface `z` [m], negative
   !! downward.
   class(spectrum_type),intent(in) :: self
     !! Spectrum instance
@@ -1118,7 +1118,7 @@ endfunction stokesDrift
 
 !-------------------------------------------------------------------------------
 pure function stokesDrift2d(self,z)
-  !! Exact solution of Stokes drift based on linear wave theory, given input 
+  !! Exact solution of Stokes drift based on linear wave theory, given input
   !! directional spectrum and distance from surface `z` [m], negative downward.
   class(spectrum_type),intent(in) :: self
     !! Spectrum instance
@@ -1259,7 +1259,7 @@ endfunction lt
 
 !-------------------------------------------------------------------------------
 pure elemental logical function ge(self,s2)
-  !! Logical greater than or equal comparison function. Overloads the `>=` 
+  !! Logical greater than or equal comparison function. Overloads the `>=`
   !! operator.
   class(spectrum_type),intent(in) :: self !! l.h.s. spectrum instance
   class(spectrum_type),intent(in) :: s2 !! r.h.s. spectrum instance
@@ -1271,7 +1271,7 @@ endfunction ge
 
 !-------------------------------------------------------------------------------
 pure elemental logical function le(self,s2)
-  !! Logical less than or equal comparison function. Overloads the `<=` 
+  !! Logical less than or equal comparison function. Overloads the `<=`
   !! operator.
   class(spectrum_type),intent(in) :: self !! l.h.s. spectrum instance
   class(spectrum_type),intent(in) :: s2 !! r.h.s. spectrum instance
@@ -1530,7 +1530,7 @@ subroutine readJSON(self,filename)
   class(spectrum_type),intent(inout) :: self !! `spectrum` instance
   character(len=*),intent(in) :: filename !! JSON file name
   type(json_file) :: json
-  logical :: found 
+  logical :: found
   integer(kind=ik) :: nfreqs
   integer(kind=ik) :: ndirs
   real(kind=rk),dimension(:),allocatable :: arr
