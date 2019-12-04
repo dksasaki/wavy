@@ -38,7 +38,7 @@ real(kind=rk),dimension(:,:),allocatable :: cg
 real(kind=rk),dimension(:),allocatable :: dx
 real(kind=rk),dimension(:,:),allocatable :: adv
 
-idm = 20 
+idm = 20
 
 write(*,*)
 write(*,*)'Initialize omnidirectional spectrum with JONSWAP shape;'
@@ -69,7 +69,7 @@ tend = domain
 domain = spec
 
 call cpu_time(t0)
-call domain % writeJSON('domain.json',minify=.true.)
+! call domain % writeJSON('domain.json',minify=.true.)
 call cpu_time(t1)
 write(*,*)'domain.json elapsed',t1-t0,'seconds'
 
@@ -80,8 +80,8 @@ write(*,fmt='(a)')'----------------------------------------------------------'&
 
 do n = 1,60
 
-  ip = 1 
-  jp = 5 
+  ip = 1
+  jp = 5
 
   spec = domain % getSpectrum()
   write(*,fmt='(9(f8.4,1x))')wspd,spec(ip,jp) % significantWaveHeight(),&

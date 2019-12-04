@@ -36,7 +36,7 @@ real(kind=rk),dimension(:,:),allocatable :: cg
 real(kind=rk),dimension(:),allocatable :: dx
 real(kind=rk),dimension(:,:),allocatable :: adv
 
-idm = 20 
+idm = 20
 
 write(*,*)
 write(*,*)'Initialize omnidirectional spectrum with JONSWAP shape;'
@@ -84,7 +84,7 @@ do n = 1,60
     WAVY_DIRECTIONAL),dt=60._rk)
 
 enddo
-call domain % writeJSON('domain.json',minify=.false.)
+! call domain % writeJSON('domain.json',minify=.false.)
 
 
 endprogram test_advection
