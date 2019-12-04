@@ -5,7 +5,7 @@
 !
 ! Licensed under the BSD-3 clause license. See LICENSE for details.
 !
-program test_advection_2d
+program umwm_2d_simple
 
 use mod_const
 use mod_nondimensional
@@ -88,7 +88,7 @@ tend = domain
 domain = spec
 
 call cpu_time(t0)
-call domain % writeJSON('domain.json',minify=.true.)
+! call domain % writeJSON('domain.json',minify=.true.)
 call cpu_time(t1)
 write(*,*)'domain.json elapsed',t1-t0,'seconds'
 
@@ -180,4 +180,4 @@ ENDIF
 
 ENDSUBROUTINE nc_check
 
-endprogram test_advection_2d
+endprogram umwm_2d_simple
