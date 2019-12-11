@@ -344,7 +344,7 @@ endfunction advectUpwind1stOrder2dRank1
 
 
 !-------------------------------------------------------------------------------
-pure function advectUpwind1stOrder2dRank2(f,u,v,dx,dy) result(dfdt)
+function advectUpwind1stOrder2dRank2(f,u,v,dx,dy) result(dfdt)
 
   !! Computes the 2-d advective tendency of an input field f given the advective
   !! velocity field u and v [m/s] and grid spacing dx and dy [m], using a first
@@ -391,8 +391,18 @@ pure function advectUpwind1stOrder2dRank2(f,u,v,dx,dy) result(dfdt)
   idm = size(f,dim=3)
   jdm = size(f,dim=4)
 
+  ! allocate(dfdt(mdm,ndm,2:idm-1,2:jdm-1))
+  ! dfdt = 0
+  !
+  ! do concurrent(i = 2:idm-1,j = 2:jdm-1,m = 1:mdm,n = 1:ndm)
+
+
   allocate(dfdt(mdm,ndm,2:idm-1,2:jdm-1))
   dfdt = 0
+  write(*,*) 'advection, idm: ', idm
+  write(*,*) 'advection, f: ', f(10,10,idm+10,jdm)
+  write(*,*) 'advection, f: ', shape(f)
+  write(*,*) 'advection, dfdt: ', shape(dfdt(:,:,idm+100,jdm))
 
   do concurrent(i = 2:idm-1,j = 2:jdm-1,m = 1:mdm,n = 1:ndm)
 

@@ -9,6 +9,7 @@ module mod_domain
 
 use mod_precision,only:ik => intkind,rk => realkind
 use mod_spectrum,only:spectrum_type
+use mod_parallel,only: num_tiles,tile_neighbors_2d
 use mod_grid,only:grid_type
 use mod_const
 use datetime_module,only:datetime,timedelta
@@ -22,7 +23,7 @@ public :: domain_type
 
 type :: domain_type
 
-  private
+  ! private
 
   character(len=:),allocatable :: type_name
 
@@ -66,7 +67,8 @@ type :: domain_type
   procedure,public,pass(self) :: getLowerBounds
   procedure,public,pass(self) :: getUpperBounds
   procedure,public,pass(self) :: getSpectrum
-  procedure,public,pass(self) :: getSpectrumArray
+  procedure,public,pass(self) :: getSpectrumArrayHalo
+  procedure,public,pass(self) :: getSpectrumArraySimple
   procedure,public,pass(self) :: getPhaseSpeed
   procedure,public,pass(self) :: getGroupSpeed
   procedure,public,pass(self) :: getSurfaceTension
@@ -83,6 +85,7 @@ type :: domain_type
   procedure,public,pass(self) :: setWaterDensity
   procedure,public,pass(self) :: significantWaveHeight
   procedure,public,pass(self) :: wavenumberMoment
+  procedure,public,pass(self) :: sync_edges
   ! procedure,public,pass(self) :: writeJSON
 
   ! Specific procedures overloaded by generic procedures and operators
@@ -121,6 +124,8 @@ type :: domain_type
   generic,public :: setSpectrumArray => setSpectrumArray1d1d,&
                                         setSpectrumArray1d2d,&
                                         setSpectrumArray2d2d
+  generic,public :: getSpectrumArray => getSpectrumArrayHalo,&
+                                        getSpectrumArraySimple
 
   ! Generic operators
   generic :: assignment(=) => assign_spectrum_array_1d,&
@@ -301,7 +306,7 @@ endfunction advect1dRank2
 
 
 !-------------------------------------------------------------------------------
-pure type(domain_type) function advect2dRank2(self,advection_method,halowidth)&
+type(domain_type) function advect2dRank2(self,advection_method,halowidth)&
   result(adv)
   !! Computes the advective tendency for the domain instance given the desired
   !! advection method as an input function and the number of halo cells. This
@@ -316,7 +321,7 @@ pure type(domain_type) function advect2dRank2(self,advection_method,halowidth)&
   class(domain_type),intent(in) :: self
     !! `domain` instance
   interface
-    pure function advection_method(f,u,v,dx,dy) result(tendency)
+    function advection_method(f,u,v,dx,dy) result(tendency)
       import :: rk
       real(kind=rk),dimension(:,:,:,:),intent(in) :: f
       real(kind=rk),dimension(:,:,:,:),intent(in) :: u
@@ -330,7 +335,7 @@ pure type(domain_type) function advect2dRank2(self,advection_method,halowidth)&
   integer(kind=ik),dimension(:),intent(in) :: halowidth
     !! number of halo cells to use in the advection method
   integer(kind=ik) :: idm,jdm,n
-  real(kind=rk),dimension(:,:,:,:),allocatable :: f
+  real(kind=rk),dimension(:,:,:,:),allocatable :: f, f1
   real(kind=rk),dimension(:,:,:),allocatable :: cg
   real(kind=rk),dimension(:,:,:,:),allocatable :: cgx
   real(kind=rk),dimension(:,:,:,:),allocatable :: cgy
@@ -342,17 +347,22 @@ pure type(domain_type) function advect2dRank2(self,advection_method,halowidth)&
   adv = self
   idm = ub(1)-lb(1)+1+2*hw(1)
   jdm = ub(2)-lb(2)+1+2*hw(2)
-  f = reshape(self % getSpectrumArray(hw,.true.),[self % nfreqs,self % ndirs,[idm,jdm]])
+
+  f = reshape(self % getSpectrumArray(hw,.false.),[self % nfreqs,self % ndirs,[idm,jdm]])
+  allocate(f1(self % nfreqs,self % ndirs,idm,jdm))
   allocate(cgx(self % nfreqs,self % ndirs,idm,jdm))
   allocate(cgy(self % nfreqs,self % ndirs,idm,jdm))
-  cg = self % getGroupSpeed(hw,.true.)
+  cg = self % getGroupSpeed(hw,.false.)
   do concurrent(n = 1:self % ndirs)
     cgx(:,n,:,:) = cos(theta(n))*cg
     cgy(:,n,:,:) = sin(theta(n))*cg
   enddo
-  dx = self % getGridSpacingXWithHalo(hw,.true.)
-  dy = self % getGridSpacingYWithHalo(hw,.true.)
-  call adv % setSpectrumArray(advection_method(f,cgx,cgy,dx,dy))
+  dx = self % getGridSpacingXWithHalo(hw,.false.)
+  dy = self % getGridSpacingYWithHalo(hw,.false.)
+  f1 = advection_method(f,cgx,cgy,dx,dy)
+
+  call adv % setSpectrumArray(f1)
+  write(*,*) shape(adv % getSpectrumArray())
   deallocate(cgx,cgy)
   endassociate
 endfunction advect2dRank2
@@ -750,7 +760,7 @@ endfunction getSpectrum
 
 
 !-------------------------------------------------------------------------------
-pure function getSpectrumArray(self,halowidth,periodic) result(spectrum_array)
+pure function getSpectrumArrayHalo(self,halowidth,periodic) result(spectrum_array)
   !! Returns a 4-dimensional spectrum array, where the first two dimensions are
   !! frequency and directional dimensions and the second two are spatial x and y
   !! dimensions.
@@ -770,6 +780,7 @@ pure function getSpectrumArray(self,halowidth,periodic) result(spectrum_array)
   ndirs = size(self % spectrum(1,1) % getSpectrum(),dim=2)
   allocate(spectrum_array(nfreqs,ndirs,lb(1)-hw(1):ub(1)+hw(1),&
                                        lb(2)-hw(2):ub(2)+hw(2)))
+  spectrum_array = 0
   do concurrent(i=lb(1):ub(1),j=lb(2):ub(2))
     spectrum_array(:,:,i,j) = self % spectrum(i,j) % getSpectrum()
   enddo
@@ -785,9 +796,34 @@ pure function getSpectrumArray(self,halowidth,periodic) result(spectrum_array)
       = spectrum_array(:,:,:,lb(2):lb(2)+hw(2)-1)
   endif
   endassociate
-endfunction getSpectrumArray
+endfunction getSpectrumArrayHalo
 !-------------------------------------------------------------------------------
 
+!-------------------------------------------------------------------------------
+pure function getSpectrumArraySimple(self) result(spectrum_array)
+  !! Returns a 4-dimensional spectrum array, where the first two dimensions are
+  !! frequency and directional dimensions and the second two are spatial x and y
+  !! dimensions.
+  class(domain_type),intent(in) :: self
+    !! Domain instance
+  real(kind=rk),dimension(:,:,:,:),allocatable :: spectrum_array
+    !! Spectrum array
+    !! periodic boundary conditions
+  integer(kind=ik) :: i,j, idm, jdm
+  integer(kind=ik) :: ndirs,nfreqs
+  associate(lb => self % lb,ub => self % ub)
+  nfreqs = size(self % spectrum(1,1) % getSpectrum(),dim=1)
+  ndirs = size(self % spectrum(1,1) % getSpectrum(),dim=2)
+  allocate(spectrum_array(nfreqs,ndirs,lb(1):ub(1),&
+                                       lb(2):ub(2)))
+  spectrum_array = 0
+  do concurrent(i=lb(1):ub(1),j=lb(2):ub(2))
+    spectrum_array(:,:,i,j) = self % spectrum(i,j) % getSpectrum()
+  enddo
+
+  endassociate
+endfunction getSpectrumArraySimple
+!-------------------------------------------------------------------------------
 
 
 !-------------------------------------------------------------------------------
@@ -855,7 +891,7 @@ pure function getGridSpacingXWithHalo(self,halowidth,periodic) result(dx)
     !! Grid spacing in x [m]
   associate(lb => self % lb,ub => self % ub,hw => halowidth)
   allocate(dx(lb(1)-hw(1):ub(1)+hw(1),lb(2)-hw(2):ub(2)+hw(2)))
-  dx = 0
+  dx = 1000
   dx(lb(1):ub(1),lb(2):ub(2)) = self % dx
   ! Set halo values for periodic boundary conditions
   if(periodic)then
@@ -884,7 +920,7 @@ pure function getGridSpacingYWithHalo(self,halowidth,periodic) result(dy)
     !! Grid spacing in y [m]
   associate(lb => self % lb,ub => self % ub,hw => halowidth)
   allocate(dy(lb(1)-hw(1):ub(1)+hw(1),lb(2)-hw(2):ub(2)+hw(2)))
-  dy = 0
+  dy = 1000
   dy(lb(1):ub(1),lb(2):ub(2)) = self % dy
   ! Set halo values for periodic boundary conditions
   if(periodic)then
@@ -1209,4 +1245,62 @@ endfunction significantWaveHeight
 !   call json % destroy(ptr)
 ! endsubroutine writeJSON
 ! !-------------------------------------------------------------------------------
+
+!------------------------------------------------------
+subroutine sync_edges(self, field, halowidth)
+  !! Sets the spectrum instances based on input spectrum array.
+  !! This implementation is for directional spectrum in 2-d space (2d-2d)
+  class(domain_type),intent(in) :: self
+  real(kind=rk),dimension(:,:,:,:),intent(inout) :: field
+  real(kind=rk), dimension(:,:,:,:), codimension[:], allocatable :: halo
+    !! Spectrum array
+  integer(kind=ik) :: i,j, idm, jdm, halo_size
+  integer(kind=ik) :: tiles(2), neighbors(4)
+  integer(kind=ik),dimension(2) :: halowidth
+
+  ! tile layout, neighbors, and indices
+  tiles = num_tiles(num_images())
+  neighbors = tile_neighbors_2d(periodic=.true.)
+
+  associate(lb => self % lb,ub => self % ub,&
+            ndirs => self % ndirs, nfreqs => self % nfreqs, hw => halowidth)
+    idm = ub(1)-lb(1)+1 + 2*hw(1)
+    jdm = ub(2)-lb(2)+1 + 2*hw(2)
+
+    ! write(*,*) 'sync edges, ub, lb:', ub, lb
+    ! write(*,*) 'sync edges, idm, lb:', idm, jdm
+    ! write(*,*) 'sync edges, field:', shape(field)
+
+    halo_size = max(idm, jdm)
+
+
+    call co_max(halo_size)
+    if (.not. allocated(halo)) allocate(halo(nfreqs, ndirs, halo_size, 4)[*])
+
+
+
+  sync all
+
+  halo(:,:,1+hw(2):jdm-hw(2),1)[neighbors(1)] = field(:,:,2  +hw(1),  1+hw(2):jdm-hw(2)  ) ! send left
+  halo(:,:,1+hw(2):jdm-hw(2),2)[neighbors(2)] = field(:,:,idm-hw(1)-1,  1+hw(2):jdm-hw(2)  ) ! send right
+  halo(:,:,1+hw(1):idm-hw(1),3)[neighbors(3)] = field(:,:,1+hw(1):idm-hw(1)        ,  2+hw(2)) ! send down
+  halo(:,:,1+hw(1):idm-hw(1),4)[neighbors(4)] = field(:,:,1+hw(1):idm-hw(1)        ,jdm-hw(2)-1) ! send up
+
+  ! if (this_image()==1)THEN
+  !   write(*,*)halo(:,10,1,3)
+  !   write(*,*)field(:,1+hw,1,3)
+  ! endif
+
+  sync all
+
+
+  field(:,:,idm,  1+hw(2):jdm-hw(2)) = halo(:,:, 1+hw(2):jdm-hw(2),1) ! from right
+  field(:,:,1  ,  1+hw(2):jdm-hw(2)) = halo(:,:, 1+hw(2):jdm-hw(2),2) ! from left
+  field(:,:,1+hw(1):idm-hw(1)  ,jdm) = halo(:,:,1+hw(1):idm-hw(1),3) ! from up
+  field(:,:,1+hw(1):idm-hw(1)  ,  1)  = halo(:,:,1+hw(1):idm-hw(1),4) ! from down
+  sync all
+  endassociate
+  deallocate(halo)
+end subroutine sync_edges
+
 endmodule mod_domain

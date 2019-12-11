@@ -90,14 +90,14 @@ domain = spec
 call cpu_time(t0)
 ! call domain % writeJSON('domain.json',minify=.true.)
 call cpu_time(t1)
-write(*,*)'domain.json elapsed',t1-t0,'seconds'
+! write(*,*)'domain.json elapsed',t1-t0,'seconds'
 
 write(*,fmt='(a)')'   wspd      Hs      Tp       Tm1      Tm2      mss'&
                 //'      m0(f)    m1(f)    m2(f)'
 write(*,fmt='(a)')'----------------------------------------------------------'&
                 //'----------------------'
 
-do n = 1,1000
+do n = 1,2
 
   ip = 1
   jp = 5
